@@ -108,11 +108,34 @@ def test_there_should_be_a_place_for_new_users_to_register(client):
     assert response.status_code == 200
     assert b"Register" in response.data
 
+def test_create_post_should_redirect_to_register_if_not_logged_in(client):
+    response = client.get(url_for("create_post"), follow_redirects=True)
+    assert b"Register" in response.data
 
 def test_should_be_a_link_to_register_if_not_logged_in(client):
     response = client.get(url_for("login"))
     assert b"Register" in response.data
 
+def test_making_comment_should_redirect_to_log_in_if_not_logged_in(client, single_post):
+    response = client.post(
+        url_for("post", post_id=single_post.id),
+        follow_redirects=True
+    )
+    assert b"Login" in response.data
+
+def test_making_comment(client, test_user, single_post):
+    login(client, test_user.username, PASSWORD)
+    response = client.post(
+        url_for("post", post_id=single_post.id),
+        follow_redirects=True,
+        data=dict(body="o")
+    )
+    assert db.session.query(Comment).filter_by(body="o").first()
+
+def test_should_redirect_to_index_if_trying_to_register_while_logged_in(client, test_user):
+    login(client, test_user.username, PASSWORD)
+    response = client.get(url_for("register"), follow_redirects=True)
+    assert b"The Front Page of WOU" in response.data
 
 def test_register_should_create_a_new_user(client):
     response = client.post(

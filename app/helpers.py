@@ -12,8 +12,7 @@ def less_than_day(second_diff):
         return str(second_diff // 60) + " minutes ago"
     if second_diff < 7200:
         return "an hour ago"
-    if second_diff < 86400:
-        return str(second_diff // 3600) + " hours ago"
+    return str(second_diff // 3600) + " hours ago"
 
 
 def pretty_date(time=False):
