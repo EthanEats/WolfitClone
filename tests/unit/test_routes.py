@@ -123,6 +123,52 @@ def test_making_comment_should_redirect_to_log_in_if_not_logged_in(client, singl
     )
     assert b"Login" in response.data
 
+def test_upvote_post_should_redirect_to_log_in_if_not_logged_in(client, single_post):
+    response = client.get(url_for("up_vote", post_id=single_post.id), follow_redirects=True)
+    assert b"Login" in response.data
+
+def test_downvote_post_should_redirect_to_log_in_if_not_logged_in(client, single_post):
+    response = client.get(url_for("down_vote", post_id=single_post.id), follow_redirects=True)
+    assert b"Login" in response.data
+
+def test_upvote_comment_should_redirect_to_log_in_if_not_logged_in(client, single_post_with_comment):
+    response = client.get(url_for("up_vote_comment", comment_id=1), follow_redirects=True)
+    assert b"Login" in response.data
+
+def test_downvote_comment_should_redirect_to_log_in_if_not_logged_in(client, single_post_with_comment):
+    response = client.get(url_for("down_vote_comment", comment_id=1), follow_redirects=True)
+    assert b"Login" in response.data
+
+def test_upvote_post(client,test_user,single_post):
+    login(client, test_user.username, PASSWORD)
+    client.get(url_for("up_vote", post_id=single_post.id))
+    assert single_post.vote_count == 1
+
+def test_downvote_post(client,test_user,single_post):
+    login(client, test_user.username, PASSWORD)
+    client.get(url_for("down_vote", post_id=single_post.id))
+    assert single_post.vote_count == -1
+
+def test_upvote_comment(client,test_user,single_post_with_comment):
+    new_user = User(username="robot", email="robot@gmail.com")
+    new_user.set_password(PASSWORD)
+    db.session.add(new_user)
+    db.session.commit()
+    login(client, new_user.username, PASSWORD)
+    comment = single_post_with_comment.comments[0]
+    client.get(url_for("up_vote_comment", comment_id=comment.id))
+    assert comment.vote_count == 2
+
+def test_downvote_comment(client,single_post_with_comment):
+    new_user = User(username="robot", email="robot@gmail.com")
+    new_user.set_password(PASSWORD)
+    db.session.add(new_user)
+    db.session.commit()
+    login(client, new_user.username, PASSWORD)
+    comment = single_post_with_comment.comments[0]
+    client.get(url_for("down_vote_comment", comment_id=comment.id))
+    assert comment.vote_count == 0
+
 def test_making_comment(client, test_user, single_post):
     login(client, test_user.username, PASSWORD)
     response = client.post(
