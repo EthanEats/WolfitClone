@@ -4,10 +4,14 @@ from flask_login import UserMixin
 
 import markdown
 
+import requests
+
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from app import db, login
 from app.helpers import pretty_date
+
+from flask import current_app
 
 user_vote = db.Table(
     "user_vote",
@@ -171,24 +175,19 @@ class Comment(db.Model):
         db.session.commit()
 
 
-class ActivityLog(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
-    user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
-    details = db.Column(db.Text)
-
-    def __repr__(self):
-        return f"<ActivityLog id {self.id} - {self.details[:20]}>"
-
-    @classmethod
-    def latest_entry(cls):
-        return cls.query.order_by(ActivityLog.id.desc()).first()
-
-    @classmethod
-    def log_event(cls, user_id, details):
-        e = cls(user_id=user_id, details=details)
-        db.session.add(e)
-        db.session.commit()
+class ActivityLog:
+    @staticmethod
+    def log_event(username, user_id, details):
+        new_activity = {
+            "user_id": user_id,
+            "username": username,
+            "details": details
+        }
+        api_url = current_app.config["ACTIVITYLOG_API_URL"]
+        get_url = api_url + "/api/activities"
+        r = requests.post(get_url, json=new_activity)
+        r.raise_for_status()
+        
 
 
 @login.user_loader
