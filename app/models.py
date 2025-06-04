@@ -13,6 +13,8 @@ from app.helpers import pretty_date
 
 from flask import current_app
 
+from .celery_worker import post_activity
+
 user_vote = db.Table(
     "user_vote",
     db.Column("user.id", db.Integer, db.ForeignKey("user.id"), primary_key=True),
@@ -183,10 +185,7 @@ class ActivityLog:
             "username": username,
             "details": details
         }
-        api_url = current_app.config["ACTIVITYLOG_API_URL"]
-        get_url = api_url + "/api/activities"
-        r = requests.post(get_url, json=new_activity)
-        r.raise_for_status()
+        post_activity.delay(new_activity, current_app.config["ACTIVITYLOG_API_URL"])
         
 
 

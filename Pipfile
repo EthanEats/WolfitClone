@@ -15,6 +15,7 @@ markdown = "*"
 flask-bootstrap = "*"
 urllib3 = "*"
 email-validator = "*"
+celery = "*"
 
 [dev-packages]
 "flake8" = "*"
